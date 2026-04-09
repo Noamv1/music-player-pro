@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>נגן מוזיקה Pro - עיצוב משופר</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #1DB954;
+            --primary-light: #1ed760;
+            --bg-dark: #0f0f0f;
+            --panel-bg: rgba(30, 30, 30, 0.95);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #ffffff;
+            --text-dim: #a0a0a0;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Heebo', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 10% 20%, rgba(29, 185, 84, 0.1) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(30, 60, 114, 0.15) 0%, transparent 40%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 25px;
+            width: 100%;
+            max-width: 1300px;
+            height: 85vh;
+        }
+
+        @media (max-width: 1100px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .main-player {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #visualizer-canvas {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 150px;
+            z-index: 0; opacity: 0.4; pointer-events: none;
+        }
+
+        .player-content { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+
+        .now-playing {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .cover-wrapper {
+            width: 180px; height: 180px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            overflow: hidden;
+            background: #222;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        
+        .cover-wrapper:hover { transform: scale(1.03); }
+        .cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+        .info-text h1 { font-size: 28px; font-weight: 800; margin-bottom: 5px; }
+        .info-text p { color: var(--text-dim); font-size: 18px; }
+
+        .controls-box {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 20px;
+            margin-top: auto;
+        }
+
+        .btn-main {
+            background: var(--primary);
+            color: black;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer; border: none;
+            transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-main:hover { transform: scale(1.1); background: var(--primary-light); }
+
+        .btn-icon {
+            background: transparent; border: none; color: var(--text-dim);
+            font-size: 18px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-icon:hover { color: var(--text); }
+        .btn-icon.active { color: var(--primary); }
+
+        .fx-panel { overflow-y: auto; }
+        
+        .fx-section-title {
+            font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--primary); margin: 15px 0 10px 0; font-weight: 800;
+        }
+
+        .fx-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid transparent;
+            transition: 0.3s;
+        }
+        .fx-card:hover { border-color: var(--border); background: rgba(255,255,255,0.08); }
+
+        .fx-card label {
+            display: flex; justify-content: space-between;
+            font-size: 13px; margin-bottom: 10px; color: var(--text-dim);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; background: #333;
+            height: 4px; border-radius: 10px; outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px;
+            background: var(--primary); border-radius: 50%; cursor: pointer;
+            box-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+        }
+
+        .track-list { margin-top: 15px; overflow-y: auto; flex-grow: 1; }
+        .track-item {
+            display: flex; align-items: center; gap: 15px; padding: 12px;
+            border-radius: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .track-item:hover { background: rgba(255,255,255,0.05); }
+        .track-item.active { background: rgba(29, 185, 84, 0.15); }
+        .track-item.active .track-title { color: var(--primary); }
+
+        .toggle-switch {
+            width: 44px; height: 22px; position: relative; display: inline-block;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #444; transition: .3s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px;
+            left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        /* אלמנט וידאו נסתר לנגן הצף */
+        #pip-video {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-grid">
+        <div class="glass-panel main-player">
+            <canvas id="visualizer-canvas"></canvas>
+            
+            <div class="player-content">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="font-weight: 800;"><i class="fas fa-play-circle" style="color: var(--primary); margin-left: 8px;"></i>נגן Pro</h2>
+                    <div style="display: flex; gap: 15px;">
+                        <button id="btn-pip" class="btn-icon" title="נגן צף"><i class="fas fa-external-link-alt"></i></button>
+                        <button onclick="document.getElementById('file-input').click()" class="btn-icon" title="הוסף שירים"><i class="fas fa-plus-circle"></i></button>
+                    </div>
+                    <input type="file" id="file-input" multiple hidden accept="audio/*">
+                </div>
+
+                <div class="now-playing">
+                    <div class="cover-wrapper">
+                        <img id="ui-cover" src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300" alt="Cover">
+                    </div>
+                    <div class="info-text">
+                        <h1 id="ui-title">מוכן להשמעה</h1>
+                        <p id="ui-artist">בחר קובץ מהמכשיר</p>
+                    </div>
+                </div>
+
+                <div class="playlist-area">
+                    <div class="track-list" id="ui-playlist">
+                        <div style="text-align: center; padding: 40px; color: var(--text-dim);">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 40px; margin-bottom: 10px;"></i>
+                            <p>גרור לכאן שירים או לחץ על הפלוס</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-box">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:15px;">
+                        <span id="time-curr" style="font-size:12px; width:40px; color: var(--text-dim);">0:00</span>
+                        <input type="range" id="progress-bar" value="0" max="100" style="flex-grow:1;">
+                        <span id="time-total" style="font-size:12px; width:40px; color: var(--text-dim);">0:00</span>
+                    </div>
+                    
+                    <div style="display:flex; justify-content:center; align-items:center; gap:30px;">
+                        <button class="btn-icon" id="btn-shuffle"><i class="fas fa-random"></i></button>
+                        <button class="btn-icon" id="btn-prev"><i class="fas fa-step-backward"></i></button>
+                        <button class="btn-main" id="btn-play"><i class="fas fa-play"></i></button>
+                        <button class="btn-icon" id="btn-next"><i class="fas fa-step-forward"></i></button>
+                        <button class="btn-icon" id="btn-repeat"><i class="fas fa-redo"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel fx-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="font-weight: 800;">עיבוד סאונד חכם</h3>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="fx-master-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="fx-section-title">דינמיקה ועוצמה</div>
+            <div class="fx-card">
+                <label>ווליום מאסטר <span id="val-gain">100%</span></label>
+                <input type="range" id="param-gain" min="0" max="2" step="0.01" value="1">
+            </div>
+            
+            <div class="fx-section-title">הגדרות נגן צף</div>
+            <div class="fx-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 13px; color: var(--text-dim);">הצג תמונת שיר בנגן צף</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="pip-show-cover" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="fx-section-title">תדרים וצבע</div>
+            <div class="fx-card">
+                <label><i class="fas fa-drum"></i> Bass Boost (נמוכים)</label>
+                <input type="range" id="param-bass-boost" min="0" max="15" step="1" value="0">
+            </div>
+            <div class="fx-card">
+                <label><i class="fas fa-wave-square"></i> חיתוך רעשים (HPF)</label>
+                <input type="range" id="param-hpf" min="20" max="1000" step="10" value="20">
+            </div>
+
+            <div class="fx-section-title">אפקטים וחלל</div>
+            <div class="fx-card">
+                <label><i class="fas fa-mountain"></i> עומק סביבתי (Reverb)</label>
+                <input type="range" id="param-reverb" min="0" max="1" step="0.05" value="0">
+            </div>
+            <div class="fx-card">
+                <label><i class="fas fa-clock"></i> דיליי / הדהוד (Echo)</label>
+                <input type="range" id="param-delay-fb" min="0" max="0.9" step="0.05" value="0">
+            </div>
+
+            <div class="fx-section-title">מהירות ופיץ'</div>
+            <div class="fx-card">
+                <label><i class="fas fa-tachometer-alt"></i> מהירות נגינה <span id="val-speed">x1.0</span></label>
+                <input type="range" id="param-playback-rate" min="0.5" max="2" step="0.05" value="1">
+            </div>
+        </div>
+    </div>
+
+    <!-- אלמנטים לעזר עבור נגן צף -->
+    <video id="pip-video" muted playsinline></video>
+    <canvas id="pip-canvas" width="400" height="400" style="display:none;"></canvas>
+
+    <audio id="audio-engine" crossorigin="anonymous"></audio>
+  
+<script src="renderer.js"></script>
+
+</body>
+</html>
