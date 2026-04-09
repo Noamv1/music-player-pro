@@ -1,0 +1,25 @@
+{
+  "name": "music-player-pro",
+  "version": "1.0.0",
+  "description": "Advanced Music Player",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "music.player.pro",
+    "productName": "Music Player Pro",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    }
+  }
+}
